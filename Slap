@@ -1,0 +1,60 @@
+
+
+local Admins = {
+    -- 
+    ["poopoogod69"] = true,
+    -- ["Mowdas12"] = true,
+}
+
+local MAX_SLAPS = 2^31 - 1 -- safe upper bound for an IntValue (approx 2,147,483,647)
+
+game.Players.PlayerAdded:Connect(function(player)
+    -- create leaderstats
+    local leaderstats = Instance.new("Folder")
+    leaderstats.Name = "leaderstats"
+    leaderstats.Parent = player
+
+    local slaps = Instance.new("IntValue")
+    slaps.Name = "Slaps"
+    slaps.Value = 0
+    slaps.Parent = leaderstats
+
+    -- optional: create a default starting value (uncomment if desired)
+    -- slaps.Value = 100
+
+    -- admin chat commands for testing: /setslaps <player> <amount> or /setslapsme <amount>
+    player.Chatted:Connect(function(msg)
+        -- set your own slaps: /setslapsme 1000000000
+        local cmd, arg = msg:match("^/([%w_]+)%s*(.*)")
+        if not cmd then return end
+        cmd = cmd:lower()
+
+        if cmd == "setslapsme" and Admins[player.Name] then
+            local n = tonumber(arg)
+            if n then
+                slaps.Value = math.clamp(math.floor(n), 0, MAX_SLAPS)
+                player:SendNotification({Title="Admin", Text="Your Slaps set to "..tostring(slaps.Value), Duration=3})
+            end
+            return
+        end
+
+        -- set someone else: /setslaps PlayerName 1000000000
+        if cmd == "setslaps" and Admins[player.Name] then
+            local targetName, amount = arg:match("^(%S+)%s*(%d*)")
+            if targetName and amount then
+                local target = game.Players:FindFirstChild(targetName)
+                local n = tonumber(amount)
+                if target and n then
+                    local ts = target:FindFirstChild("leaderstats")
+                    if ts then
+                        local tSlaps = ts:FindFirstChild("Slaps")
+                        if tSlaps then
+                            tSlaps.Value = math.clamp(math.floor(n), 0, MAX_SLAPS)
+                        end
+                    end
+                end
+            end
+            return
+        end
+    end)
+end)
